@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 namespace ExpenseAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class ExpenseController : ControllerBase
     {
         private readonly ExpenseContext _context;

@@ -7,6 +7,7 @@
 // Description — This is the description of the output (expense)
 // Amount — This is the amount of the output (expense) float
 // Category — This is the category of the output (expense
+//Title -string
 
 
 using System.ComponentModel.DataAnnotations;
@@ -23,5 +24,7 @@ namespace ExpenseAPI.Models
         [Required]
         public double Amount { get; set; }
         public string Category { get; set; }
+
+        public string Title { get; set; }
     }
 }

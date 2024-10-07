@@ -2,6 +2,15 @@ using ExpenseAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+// Add services to the container.
+string MyCorsPolicy = "MyCorsPolicy";
+
+builder.Services.AddCors(options => {
+    options.AddPolicy(
+        name: MyCorsPolicy,
+        policy => policy.WithOrigins("*").WithHeaders("*").WithMethods("*")
+    );
+});
 
 builder.Services.AddControllers();
 // Add services to the container.
@@ -11,9 +20,28 @@ builder.Services.AddSwaggerGen();
 //DI注入
 builder.Services.AddDbContext<ExpenseContext>(options =>
     options.UseInMemoryDatabase("ExpenseList"));
-//datagenerator注入
+//datagenerator注入 ,
+builder.Services.AddTransient<Datagenerator>();
+// Build the service provider.
 var serviceProvider = builder.Services.BuildServiceProvider();
-Datagenerator.Initialize(serviceProvider);
+// Obtain the service scope. ,同時我想try catch,且 log error
+using (var scope = serviceProvider.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ExpenseContext>();
+        var datagenerator = services.GetRequiredService<Datagenerator>();
+        //初始化資料
+        Datagenerator.Initialize(serviceProvider);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred creating the DB.");
+    }
+}
+
 
 var app = builder.Build();
 
@@ -31,6 +59,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+//cors 同源政策
+// 使用 CORS 政策
+app.UseCors("MyCorsPolicy");
 
 app.UseHttpsRedirection();
 
