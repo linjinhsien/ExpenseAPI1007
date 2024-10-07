@@ -11,9 +11,28 @@ builder.Services.AddSwaggerGen();
 //DI注入
 builder.Services.AddDbContext<ExpenseContext>(options =>
     options.UseInMemoryDatabase("ExpenseList"));
-//datagenerator注入
+//datagenerator注入 ,
+builder.Services.AddTransient<Datagenerator>();
+// Build the service provider.
 var serviceProvider = builder.Services.BuildServiceProvider();
-Datagenerator.Initialize(serviceProvider);
+// Obtain the service scope. ,同時我想try catch,且 log error
+using (var scope = serviceProvider.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ExpenseContext>();
+        var datagenerator = services.GetRequiredService<Datagenerator>();
+        //初始化資料
+        Datagenerator.Initialize(serviceProvider);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred creating the DB.");
+    }
+}
+
 
 var app = builder.Build();
 
