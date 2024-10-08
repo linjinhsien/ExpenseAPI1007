@@ -22,7 +22,7 @@ namespace ExpenseAPI.Controllers
             _logger = logger;
         }
 
-        // GET: api/Expense
+        // GET: /Expense
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses()
         {
@@ -30,7 +30,7 @@ namespace ExpenseAPI.Controllers
             return await _context.Expenses.ToListAsync();
         }
 
-        // GET: api/Expense/{id}
+        // GET: /Expense/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<Expense>> GetExpense(int id)
         {
@@ -46,18 +46,28 @@ namespace ExpenseAPI.Controllers
             return expense;
         }
 
-        // POST: api/Expense
+        // POST: /Expense
+        //提供了如何使用 curl 呼叫的範例
+        //curl -X POST -H "Content-Type: application/json" -d "{\"date\":\"2021-01-01\",\"description\":\"午餐\",\"amount\":500}" https://localhost:7039/Expense
+        //並提到如果描述是午餐，且Amount範圍超過400,說明午餐不能夠報銷。
         [HttpPost]
-        public async Task<ActionResult<Expense>> PostExpense(Expense expense)
-        {
-            _logger.LogInformation("Creating new expense");
+        public async Task<ActionResult<Expense>> PostExpenseWithDescriptionCheck(Expense expense)
+        {  
+            if (expense.Description == "午餐" && expense.Amount > 400)
+            {
+                _logger.LogWarning("Lunch expense with amount over 400 is not allowed");
+                return BadRequest("午餐費用不能超過400元");
+            }
             _context.Expenses.Add(expense);
+
             await _context.SaveChangesAsync();
 
+                _logger.LogInformation("Created expense with id: {ExpenseId}", expense.Id);
             return CreatedAtAction(nameof(GetExpense), new { id = expense.Id }, expense);
         }
+    
 
-        // PUT: api/Expense/{id}
+        // PUT: /Expense/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> PutExpense(int id, Expense expense)
         {
@@ -90,7 +100,7 @@ namespace ExpenseAPI.Controllers
             return NoContent();
         }
 
-        // DELETE: api/Expense/{id}
+        // DELETE: /Expense/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteExpense(int id)
         {

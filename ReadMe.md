@@ -19,7 +19,7 @@ ExpenseAPI 是一個簡單的 ASP.NET Core Web API，用於管理支出。
 
 ## 專案的架構
 
-- .NET 6.0 SDK
+- .NET 8.0 SDK
 - ASP.NET Core
 - Entity Framework Core
 - Swashbuckle (Swagger)
@@ -29,7 +29,7 @@ ExpenseAPI 是一個簡單的 ASP.NET Core Web API，用於管理支出。
 1. 克隆此倉庫：
 
     ```sh
-    git clone https://github.com/yourusername/ExpenseAPI.git
+    git clone https://github.com/linjinhsien/ExpenseAPI.git
     cd ExpenseAPI
     ```
 
