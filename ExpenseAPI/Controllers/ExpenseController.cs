@@ -69,7 +69,7 @@ namespace ExpenseAPI.Controllers
 
             await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Created expense with id: {ExpenseId}", expense.Id);
+            _logger.LogInformation("Created expense with id: {ExpenseId}", expense.Id);
             return CreatedAtAction(nameof(GetExpense), new { id = expense.Id }, expense);
         }
     
