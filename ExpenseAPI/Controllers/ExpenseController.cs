@@ -60,6 +60,11 @@ namespace ExpenseAPI.Controllers
                 _logger.LogWarning("Lunch expense with amount over 400 is not allowed");
                 return BadRequest("午餐費用不能超過400元");
             }
+            if (expense.Amount < 0)
+            {
+                _logger.LogWarning("數量不能為負的");
+                return BadRequest("數量不能為負的");
+            }
             _context.Expenses.Add(expense);
 
             await _context.SaveChangesAsync();
