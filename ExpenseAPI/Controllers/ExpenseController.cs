@@ -22,6 +22,8 @@ namespace ExpenseAPI.Controllers
             _logger = logger;
         }
 
+     
+
         // GET: /Expense
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses()
@@ -51,7 +53,7 @@ namespace ExpenseAPI.Controllers
         //curl -X POST -H "Content-Type: application/json" -d "{\"date\":\"2021-01-01\",\"description\":\"午餐\",\"amount\":500}" https://localhost:7039/Expense
         //並提到如果描述是午餐，且Amount範圍超過400,說明午餐不能夠報銷。
         [HttpPost]
-        public async Task<ActionResult<Expense>> PostExpenseWithDescriptionCheck(Expense expense)
+        public async Task<ActionResult<Expense>> PostExpense(Expense expense)
         {  
             if (expense.Description == "午餐" && expense.Amount > 400)
             {
