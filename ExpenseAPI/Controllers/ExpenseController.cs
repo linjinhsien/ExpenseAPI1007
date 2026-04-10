@@ -13,6 +13,9 @@ namespace ExpenseAPI.Controllers
     [Route("[controller]")]
     public class ExpenseController : ControllerBase
     {
+        private const string LunchDescription = "午餐";
+        private const string LunchAmountLimitExceededMessage = "午餐費用不能超過400元";
+
         private readonly ExpenseContext _context;
         private readonly ILogger<ExpenseController> _logger;
 
@@ -54,17 +57,13 @@ namespace ExpenseAPI.Controllers
         //並提到如果描述是午餐，且Amount範圍超過400,說明午餐不能夠報銷。
         [HttpPost]
         public async Task<ActionResult<Expense>> PostExpense(Expense expense)
-        {  
-            if (expense.Description == "午餐" && expense.Amount > 400)
+        {
+            var validationResult = ValidateExpense(expense);
+            if (validationResult is not null)
             {
-                _logger.LogWarning("Lunch expense with amount over 400 is not allowed");
-                return BadRequest("午餐費用不能超過400元");
+                return validationResult;
             }
-            if (expense.Amount < 0)
-            {
-                _logger.LogWarning("數量不能為負的");
-                return BadRequest("數量不能為負的");
-            }
+
             _context.Expenses.Add(expense);
 
             await _context.SaveChangesAsync();
@@ -116,24 +115,26 @@ namespace ExpenseAPI.Controllers
                 existingExpense.Title = expense.Title;
             }
 
-            if (string.IsNullOrWhiteSpace(existingExpense.Description))
+            var validationResult = ValidateExpense(existingExpense);
+            if (validationResult is not null)
             {
-                return BadRequest("Description is required");
+                return validationResult;
             }
 
-            if (existingExpense.Description == "午餐" && existingExpense.Amount > 400)
+            try
             {
-                _logger.LogWarning("Lunch expense with amount over 400 is not allowed");
-                return BadRequest("午餐費用不能超過400元");
+                await _context.SaveChangesAsync();
             }
-
-            if (existingExpense.Amount < 0)
+            catch (DbUpdateConcurrencyException)
             {
-                _logger.LogWarning("數量不能為負的");
-                return BadRequest("數量不能為負的");
-            }
+                if (!ExpenseExists(id))
+                {
+                    _logger.LogWarning("Expense with id: {ExpenseId} no longer exists during update", id);
+                    return NotFound();
+                }
 
-            await _context.SaveChangesAsync();
+                throw;
+            }
             _logger.LogInformation("Updated expense with id: {ExpenseId}", id);
 
             return NoContent();
@@ -160,6 +161,29 @@ namespace ExpenseAPI.Controllers
         private bool ExpenseExists(int id)
         {
             return _context.Expenses.Any(e => e.Id == id);
+        }
+
+        private BadRequestObjectResult? ValidateExpense(Expense expense)
+        {
+            if (string.IsNullOrWhiteSpace(expense.Description))
+            {
+                _logger.LogWarning("Description is required");
+                return BadRequest("Description is required");
+            }
+
+            if (expense.Description == LunchDescription && expense.Amount > 400)
+            {
+                _logger.LogWarning("Lunch expense with amount over 400 is not allowed");
+                return BadRequest(LunchAmountLimitExceededMessage);
+            }
+
+            if (expense.Amount < 0)
+            {
+                _logger.LogWarning("數量不能為負的");
+                return BadRequest("數量不能為負的");
+            }
+
+            return null;
         }
     }
 }
