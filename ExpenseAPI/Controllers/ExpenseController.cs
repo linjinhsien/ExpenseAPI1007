@@ -78,31 +78,52 @@ namespace ExpenseAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutExpense(int id, Expense expense)
         {
-            if (id != expense.Id)
+            if (expense.Id != 0 && id != expense.Id)
             {
                 _logger.LogWarning("Mismatched expense id for update. Route id: {RouteId}, Expense id: {ExpenseId}", id, expense.Id);
                 return BadRequest();
             }
 
-            _context.Entry(expense).State = EntityState.Modified;
+            var existingExpense = await _context.Expenses.FindAsync(id);
+            if (existingExpense == null)
+            {
+                _logger.LogWarning("Expense with id: {ExpenseId} not found during update", id);
+                return NotFound();
+            }
 
-            try
+            if (expense.Date != default)
             {
-                await _context.SaveChangesAsync();
-                _logger.LogInformation("Updated expense with id: {ExpenseId}", id);
+                existingExpense.Date = expense.Date;
             }
-            catch (DbUpdateConcurrencyException)
+
+            if (expense.Description is not null)
             {
-                if (!ExpenseExists(id))
-                {
-                    _logger.LogWarning("Expense with id: {ExpenseId} not found during update", id);
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                existingExpense.Description = expense.Description;
             }
+
+            existingExpense.Amount = expense.Amount;
+            existingExpense.Category = expense.Category;
+            existingExpense.Title = expense.Title;
+
+            if (string.IsNullOrWhiteSpace(existingExpense.Description))
+            {
+                return BadRequest("Description is required");
+            }
+
+            if (existingExpense.Description == "午餐" && existingExpense.Amount > 400)
+            {
+                _logger.LogWarning("Lunch expense with amount over 400 is not allowed");
+                return BadRequest("午餐費用不能超過400元");
+            }
+
+            if (existingExpense.Amount < 0)
+            {
+                _logger.LogWarning("數量不能為負的");
+                return BadRequest("數量不能為負的");
+            }
+
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Updated expense with id: {ExpenseId}", id);
 
             return NoContent();
         }
