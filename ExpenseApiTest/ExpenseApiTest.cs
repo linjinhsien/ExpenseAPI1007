@@ -133,6 +133,8 @@ public class ExpenseControllerTest
         Assert.Equal(DateTime.Parse("2026-01-15"), updatedExpense!.Date);
         Assert.Equal("午餐", updatedExpense.Description);
         Assert.Equal(120, updatedExpense.Amount);
+        Assert.Equal("食", updatedExpense.Category);
+        Assert.Equal("早餐", updatedExpense.Title);
     }
 
     [Fact]
