@@ -100,4 +100,56 @@ public class ExpenseControllerTest
         Assert.Equal(newExpense.Date, createdExpense.Date);
         Assert.Equal(newExpense.Title, createdExpense.Title);
     }
+
+    [Fact]
+    public async Task PutExpense_PartialUpdateWithoutDate_KeepsOriginalDate()
+    {
+        // Arrange
+        var existingExpense = new Expense
+        {
+            Category = "食",
+            Description = "早餐",
+            Amount = 80,
+            Date = DateTime.Parse("2026-01-15"),
+            Title = "早餐"
+        };
+
+        _context.Expenses.Add(existingExpense);
+        await _context.SaveChangesAsync();
+
+        var updateRequest = new ExpenseUpdateRequest
+        {
+            Description = "午餐",
+            Amount = 120
+        };
+
+        // Act
+        var result = await _controller.PutExpense(existingExpense.Id, updateRequest);
+        var updatedExpense = await _context.Expenses.FindAsync(existingExpense.Id);
+
+        // Assert
+        Assert.IsType<NoContentResult>(result);
+        Assert.NotNull(updatedExpense);
+        Assert.Equal(DateTime.Parse("2026-01-15"), updatedExpense!.Date);
+        Assert.Equal("午餐", updatedExpense.Description);
+        Assert.Equal(120, updatedExpense.Amount);
+    }
+
+    [Fact]
+    public async Task PutExpense_MismatchedId_ReturnsBadRequest()
+    {
+        // Arrange
+        var updateRequest = new ExpenseUpdateRequest
+        {
+            Id = 99,
+            Description = "晚餐"
+        };
+
+        // Act
+        var result = await _controller.PutExpense(1, updateRequest);
+
+        // Assert
+        Assert.IsType<BadRequestResult>(result);
+    }
+
 }
