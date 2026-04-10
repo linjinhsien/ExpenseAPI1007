@@ -75,6 +75,27 @@ public class ExpenseControllerTest
     }
 
     [Fact]
+    public async Task PostExpense_EmptyDescription_ReturnsBadRequest()
+    {
+        // Arrange
+        var newExpense = new Expense
+        {
+            Category = "行",
+            Description = " ",
+            Amount = 50,
+            Date = DateTime.Parse("2021-01-01"),
+            Title = "交通捷運費"
+        };
+
+        // Act
+        var result = await _controller.PostExpense(newExpense);
+
+        // Assert
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("Description is required", badRequest.Value);
+    }
+
+    [Fact]
     //一個邊界測試
     public async Task PostExpense_BoundaryExpense_ReturnsCreatedExpense()
     {
@@ -152,6 +173,35 @@ public class ExpenseControllerTest
 
         // Assert
         Assert.IsType<BadRequestResult>(result);
+    }
+
+    [Fact]
+    public async Task PutExpense_EmptyDescription_ReturnsBadRequest()
+    {
+        // Arrange
+        var existingExpense = new Expense
+        {
+            Category = "食",
+            Description = "午餐",
+            Amount = 100,
+            Date = DateTime.Parse("2026-01-15"),
+            Title = "用餐"
+        };
+
+        _context.Expenses.Add(existingExpense);
+        await _context.SaveChangesAsync();
+
+        var updateRequest = new ExpenseUpdateRequest
+        {
+            Description = ""
+        };
+
+        // Act
+        var result = await _controller.PutExpense(existingExpense.Id, updateRequest);
+
+        // Assert
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal("Description is required", badRequest.Value);
     }
 
 }
