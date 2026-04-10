@@ -13,6 +13,9 @@ namespace ExpenseAPI.Controllers
     [Route("[controller]")]
     public class ExpenseController : ControllerBase
     {
+        private const string LunchDescription = "午餐";
+        private const string LunchAmountLimitExceededMessage = "午餐費用不能超過400元";
+
         private readonly ExpenseContext _context;
         private readonly ILogger<ExpenseController> _logger;
 
@@ -55,10 +58,10 @@ namespace ExpenseAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Expense>> PostExpense(Expense expense)
         {  
-            if (expense.Description == "午餐" && expense.Amount > 400)
+            if (expense.Description == LunchDescription && expense.Amount > 400)
             {
                 _logger.LogWarning("Lunch expense with amount over 400 is not allowed");
-                return BadRequest("午餐費用不能超過400元");
+                return BadRequest(LunchAmountLimitExceededMessage);
             }
             if (expense.Amount < 0)
             {
@@ -121,10 +124,10 @@ namespace ExpenseAPI.Controllers
                 return BadRequest("Description is required");
             }
 
-            if (existingExpense.Description == "午餐" && existingExpense.Amount > 400)
+            if (existingExpense.Description == LunchDescription && existingExpense.Amount > 400)
             {
                 _logger.LogWarning("Lunch expense with amount over 400 is not allowed");
-                return BadRequest("午餐費用不能超過400元");
+                return BadRequest(LunchAmountLimitExceededMessage);
             }
 
             if (existingExpense.Amount < 0)
@@ -133,7 +136,20 @@ namespace ExpenseAPI.Controllers
                 return BadRequest("數量不能為負的");
             }
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ExpenseExists(id))
+                {
+                    _logger.LogWarning("Expense with id: {ExpenseId} no longer exists during update", id);
+                    return NotFound();
+                }
+
+                throw;
+            }
             _logger.LogInformation("Updated expense with id: {ExpenseId}", id);
 
             return NoContent();
